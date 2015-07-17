@@ -9,10 +9,115 @@
     </stdio>
 
     <command><![CDATA[
-        /home/schudomc/tools/shapeit/shapeit --help > "$output1"
+        shapeit
+
+        #if $input_files.input_type_select == "vcf":
+          --input-vcf ${input_files.vcf_file}
+        #else if $input_files.input_type_select == "plink_ped_map":
+          --input-ped ${input_files.plink_ped} ${input_files.plink_map}
+          #if $input_files.plink_missing_code != "0":
+            --missing_code $input_files.plink_missing_code
+          #end if
+        #else if $input_files.input_type_select == "plink_bed_bim_fam":
+          --input-bed ${input_files.plink_bed} ${input_files.plink_bim} ${input_files.plink_fam}
+        #else if $input_files.inputy_type_select == "oxford_gen_sample":
+          --input-gen ${input_files.oxford_gen} ${input_files.oxford_sample}
+          #if $input_files.oxford_threshold != "0.9":
+            --input-thr $input_files.oxford_threshold
+          #end if
+        #end if
+
+        #if $use_genetic_map.use_genetic_map_select == "use_genetic_map_yes":
+          --input-map $use_genetic_map.genetic_map
+        #else if $use_genetic_map.rho != "0.0004":
+          --rho $use_genetic_map.rho
+        #end if
+
+        #if $use_ref_panel.use_ref_panel_select == "use_ref_panel_yes":
+          --input-ref $use_ref_panel.ref_panel_haps $use_ref_panel.ref_panel_legend $use_ref_panel.ref_panel_sample
+          #if $use_ref_panel.disable_mcmc_iterations == "disable_mcmc_iterations_yes":
+            --no-mcmc
+          #end if
+          #if $use_ref_panel.filter_groups == "exclude_groups":
+            --exclude-grp $use_ref_panel.filter_groups.exclude_groups_file
+          #else if $use_ref_panel.filter_groups == "include_groups":
+              --include-grp $use_ref_panel.filter_groups.include_groups_file
+          #end if
+        #end if
+
+        #if $use_filters.use_filters_select == "use_filters_yes":
+          #if $use_filters.use_input_from == "use_input_from_yes":
+            --input-from $input_from
+          #end if
+          #if $use_filters.use_input_to == "use_input_to_yes":
+            --input-to $input_to
+          #end if
+          #if $use_filters.use_output_from == "use_output_from_yes":
+            --output-from $output_from
+          #end if
+          #if $use_filters.use_output_to == "use_output_to_yes":
+            --output-to $output_to
+          #end if
+          #if $use_filters.filter_individuals == "exclude_individuals":
+            --exclude-ind $use_filters.exclude_inviduals_file
+          #else if $use_filters.filter_individuals == "include_individuals":
+            --include-ind $use_filters.include_inviduals_file
+          #end if
+          #if $use_filters.filter_individuals == "exclude_SNPs":
+            --exclude-snp $use_filters.exclude_SNPs_file
+          #else if $use_filters.filter_SNPs == "include_SNPs":
+            --include-snp $use_filters.include_SNPs_file
+          #end if
+        #end if
+
+        #if $use_advanced_parameters.use_advanced_parameters_select == "use_advanced_parameters_yes":
+          #if $use_advanced_parameters.chrX == "chrX_yes":
+            --chrX
+          #end if
+          #if $use_advanced_parameters.noped == "noped_yes":
+            --noped
+          #end if
+          #if $use_advanced_parameters.states != "100":
+            --states $use_advanced_parameters.states
+          #end if
+          #if $use_advanced_parameters.window != "2.0":
+            --window $use_advanced_parameters.window
+          #end if
+          #if $use_advanced_parameters.model_version1 == "use_v1_yes":
+            --model-version1
+          #end if
+          #if $use_advanced_parameters.eff_size.eff_size_select == "eff_size_european":
+            --effective-size 11418
+          #else if $use_advanced_parameters.eff_size.eff_size_select == "eff_size_african":
+            --effective-size 17469
+          #else if $use_advanced_parameters.eff_size.eff_size_select == "eff_size_asian":
+            --effective-size 14269
+          #else if $use_advanced_parameters.eff_size.eff_size_select == "eff_size_mixedpop":
+            --effective-size $use_advanced_parameters.eff_size.eff_size_mixed
+          #end if
+          #if $use_advanced_parameters.burn != "7":
+            --burn $use_advanced_parameters.burn
+          #end if
+          #if $use_advanced_parameters.prune != "8":
+            --prune $use_advanced_parameters.prune
+          #end if
+          #if $use_advanced_parameters.main != "20":
+            --main $use_advanced_parameters.main
+          #end if
+          #if $use_advanced_parameters.threads != "1":
+            --threads $use_advanced_parameters.threads
+          #end if
+          #if $use_advanced_parameters.set_rng_seed.set_rng_seed_select == "set_rng_seed_yes":
+            --seed $use_advanced_parameters.rng_seed
+          #end if
+        #end if
+        --output-max $out_haps $out_sample
+        --output-graph $out_graph
+        --output-log $out_log
     ]]></command>
+
     <inputs>
-      <conditional name="input_types">
+      <conditional name="input_files">
         <param name="input_type_select" type="select" label="Please specify your input files.">
           <option value="vcf" selected="True">VCF Variant Call Format</option>
           <option value="plink_ped_map">Plink PED/MAP format</option>
@@ -50,7 +155,6 @@
         <when value="use_genetic_map_no">
           <param name="rho" type="float" value="0.0004" default="0.0004" label="Adjust recombination rate (--rho) for human data (0.001)"/>
         </when>
-
       </conditional>
 
       <conditional name="use_ref_panel">
@@ -138,11 +242,7 @@
             </when>
           </conditional>
         </when>
-
-
       </conditional>
-
-
 
       <conditional name="use_filters">
         <param name="use_filters_select" type="select" label="Apply filtering">
@@ -223,7 +323,10 @@
 
     </inputs>
     <outputs>
-      <data name="output1"/>
+      <data name="out_haps" format="tabular" label="${tool.name} on ${on_string} haplotypes (.haps)"/>
+      <data name="out_sample" format="tabular" label="${tool.name} on ${on_string} additional information (.sample)"/>
+      <data name="out_graph" format="text" label="${tool.name} on ${on_string} haplotype graphs (.hgraph)"/>
+      <data name="out_log" format="text" label="${tool.name} on ${on_string} logfile (.log)"/>
     </outputs>
     <help><![CDATA[
         TODO: Fill in help.
